@@ -324,6 +324,7 @@ red_social = pd.concat([red_social, red_social_2, red_social_3], ignore_index=Tr
 # CONSTRUCCION DE NUESTRA BASE DE DATOS SEGUN EL DER
 #=============================================================================
 
+#red_social_sede representa la relacion del DER "tiene" entre sede y red social
 red_social_sede = red_social
 
 sedes=sql^ """SELECT DISTINCT sede_id,cantidad_secciones 
