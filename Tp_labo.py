@@ -16,7 +16,7 @@ import numpy as np
 #=============================================================================
 
 #DATOS SEDES
-carpeta = "/Users/Usuario/Downloads/Tp_Labo/"
+carpeta = "/home/Estudiante/Tp_Labo/"
 datos_basicos=pd.read_csv(carpeta+"lista-sedes.csv")
 datos_completos=pd.read_csv(carpeta+"Datos_sedes_completos.csv")
 #arreglamos la linea 16 manualmente (ya que generaba un error al importar dicha base)
@@ -55,6 +55,7 @@ datos_migraciones.rename(columns={'Country Origin Code': 'origen',
 datos_migraciones=sql^ """SELECT DISTINCT origen, destino, casos_1960,casos_1970,casos_1980,casos_1990,casos_2000 
                           FROM datos_migraciones WHERE genero='TOT'"""
                           
+
 
 #%%===========================================================================
 # ANÁLISIS- CALIDAD DE DATOS
@@ -289,7 +290,7 @@ red_social = sql^ """
             LEFT JOIN red_social_3 AS r3 ON rs.sede_id = r3.sede_id AND rs.url = r3.url
             WHERE r3.sede_id IS NULL
             """
-#convertimos a url los datos que pueden ser convertidos bajo nuestro criterio y analisis
+#convertimos a url los datos que pueden ser convertidos bajo#tiene lo armamos en la celda anterior nuestro criterio y analisis
 def convertir_a_url_instagram_2(url):
     if url in [
         "argentinaencolombia", 
@@ -325,20 +326,36 @@ red_social = pd.concat([red_social, red_social_2, red_social_3], ignore_index=Tr
 #%%===========================================================================
 # CONSTRUCCION DE NUESTRA BASE DE DATOS SEGUN EL DER
 #=============================================================================
-#red_social lo armamos en la celda anterior
-flujos_migratorios= datos_migraciones
-sedes=sql^ """SELECT DISTINCT db.sede_id, db.pais_iso_3 ,db.pais_castellano AS pais, 
-            dc.region_geografica,db.cantidad_secciones 
-            FROM datos_basicos AS db INNER JOIN datos_completos AS dc ON db.sede_id=dc.sede_id"""
+
+red_social_sede = red_social
+
+sedes=sql^ """SELECT DISTINCT sede_id,cantidad_secciones 
+            FROM datos_basicos"""
 
 
+#construccion de tabla flujos_migratorios utlizando la tabla datos_migraciones
 
-#%%===========================================================================
-# PASAMOS EL MODELO RELACIONAL A 3FN
-#=============================================================================
-codigos_paises=sql^"""SELECT DISTINCT pais_iso_3, pais FROM sedes"""
-ubicacion=sql^"""SELECT DISTINCT pais_iso_3, region_geografica FROM sedes"""
-sedes=sql^"""SELECT DISTINCT sede_id, pais_iso_3,cantidad_secciones FROM sedes"""
+año_1960= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1960 AS INTEGER) >=0 THEN 1960 END AS año ,casos_1960  AS cantidad FROM datos_migraciones"""
+año_1970= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1970 AS INTEGER) >=0 THEN 1970 END AS año ,casos_1970  AS cantidad FROM datos_migraciones"""
+año_1980= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1980 AS INTEGER) >=0 THEN 1980 END AS año ,casos_1980  AS cantidad FROM datos_migraciones"""
+año_1990= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1990 AS INTEGER) >=0 THEN 1990 END AS año ,casos_1990  AS cantidad FROM datos_migraciones"""
+año_2000= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_2000 AS INTEGER) >=0 THEN 2000 END AS año ,casos_2000  AS cantidad FROM datos_migraciones"""
+                                                                                                                             
+flujos_migratorios = sql^ """SELECT * FROM año_1960 
+                        UNION
+                        SELECT * FROM año_1970 
+                        UNION
+                        SELECT * FROM año_1980 
+                        UNION
+                        SELECT * FROM año_1990 
+                        UNION
+                        SELECT * FROM año_2000"""
+
+
+pais=sql^"""SELECT DISTINCT  db.pais_iso_3, db.pais_castellano AS nombre_pais , dc.region_geografica FROM datos_basicos AS db
+                INNER JOIN datos_completos AS dc ON db.sede_id=dc.sede_id"""
+
+ubicada_en=sql^"""SELECT DISTINCT sede_id, pais_iso_3 FROM datos_basicos"""
 
 
 #%%===========================================================================
@@ -347,52 +364,63 @@ sedes=sql^"""SELECT DISTINCT sede_id, pais_iso_3,cantidad_secciones FROM sedes""
 #%%
 #Consulta i)
 #contamos la cantidad de sedes argentinas en cada pais y la suma de sus secciones
-sedes_por_paises=sql^"""SELECT DISTINCT cp.pais, COUNT(s.sede_id) AS sedes,
+sedes_por_paises=sql^"""SELECT DISTINCT p.nombre_pais, COUNT(u.sede_id) AS sedes,
                             SUM(CAST(s.cantidad_secciones AS INTEGER)) as secciones
-                            FROM sedes AS s
-                            INNER JOIN codigos_paises AS cp ON s.pais_iso_3=cp.pais_iso_3
-                            GROUP BY cp.pais
+                            FROM ubicada_en AS u
+                            INNER JOIN pais AS p ON p.pais_iso_3=u.pais_iso_3
+                            INNER JOIN sedes AS s ON u.sede_id= s.sede_id
+                            GROUP BY p.nombre_pais
                             """ 
-#calculamos el flujo de emigrantes de cada pais
-flujo_emigrantes=sql^"""SELECT cp.pais, sum(CAST(fm.casos_2000 AS INTEGER)) AS emigrantes FROM flujos_migratorios AS fm
-                        INNER JOIN codigos_paises cp ON cp.pais_iso_3= fm.origen
-                        GROUP BY cp.pais 
-                        """
-#calculamos el flujo de imigrantes de cada pais                       
-flujo_inmigrantes=sql^"""SELECT cp.pais, sum(CAST(fm.casos_2000 AS INTEGER)) AS inmigrantes FROM flujos_migratorios AS fm
-                         INNER JOIN codigos_paises cp ON cp.pais_iso_3= fm.destino
-                         GROUP BY cp.pais
-                        """
-#calculamos el flujo migratorio neto                        
-flujo_migratorio_neto=sql^"""SELECT DISTINCT fe.pais,fe.emigrantes-fi.inmigrantes AS neto FROM flujo_emigrantes AS fe
-                            INNER JOIN flujo_inmigrantes AS fi ON fe.pais=fi.pais """
-#unimos todo en el resultado                            
-dataframe_resultado_i=sql^ """SELECT DISTINCT spp.pais,spp.sedes,spp.secciones /spp.sedes AS 'Secciones promedio',
-                            fmn.neto AS  'Flujo Migratorio Neto' FROM sedes_por_paises AS spp
-                            INNER JOIN flujo_migratorio_neto AS fmn ON spp.pais=fmn.pais
-                            ORDER BY spp.sedes DESC, spp.pais ASC"""
+                            
 
-dataframe_resultado_i.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_1.csv', index=False)
+#calculamos el flujo de emigrantes de cada pais
+flujo_emigrantes=sql^"""SELECT p.nombre_pais, sum(CAST(cantidad AS INTEGER)) AS emigrantes FROM flujos_migratorios AS fm
+                        INNER JOIN pais p ON p.pais_iso_3= fm.origen
+                        WHERE año=2000
+                        GROUP BY p.nombre_pais  
+                        """
+
+                      
+#calculamos el flujo de imigrantes de cada pais                       
+flujo_inmigrantes=sql^"""SELECT p.nombre_pais, sum(CAST(cantidad AS INTEGER)) AS inmigrantes FROM flujos_migratorios AS fm
+                        INNER JOIN pais p ON p.pais_iso_3= fm.destino
+                        WHERE año=2000
+                        GROUP BY p.nombre_pais  
+                        """
+                        
+#calculamos el flujo migratorio neto                        
+flujo_migratorio_neto=sql^"""SELECT DISTINCT fe.nombre_pais,fe.emigrantes-fi.inmigrantes AS neto FROM flujo_emigrantes AS fe
+                            INNER JOIN flujo_inmigrantes AS fi ON fe.nombre_pais=fi.nombre_pais """
+
+#unimos todo en el resultado                            
+dataframe_resultado_i=sql^ """SELECT DISTINCT spp.nombre_pais AS pais,spp.sedes,spp.secciones /spp.sedes AS 'Secciones promedio',
+                            fmn.neto AS  'Flujo Migratorio Neto' FROM sedes_por_paises AS spp
+                            INNER JOIN flujo_migratorio_neto AS fmn ON spp.nombre_pais=fmn.nombre_pais
+                            ORDER BY spp.sedes DESC, spp.nombre_pais ASC"""
+
+#dataframe_resultado_i.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_1.csv', index=False)
 
 #%% Consulta ii)
 
-paises_con_sedes_argentinas=sql^"""SELECT DISTINCT pais_iso_3 FROM sedes"""
+paises_con_sedes_argentinas=sql^"""SELECT DISTINCT pais_iso_3 FROM ubicada_en"""
 
 #la cantidad de paises con sedes agrupadas por region
-regiones=sql^ """SELECT DISTINCT u.region_geografica, count(p.pais_iso_3) AS paises FROM paises_con_sedes_argentinas AS p
-                            INNER JOIN ubicacion AS u ON u.pais_iso_3=p.pais_iso_3
+regiones=sql^ """SELECT DISTINCT p.region_geografica, count(psa.pais_iso_3) AS paises FROM paises_con_sedes_argentinas AS psa
+                            INNER JOIN pais AS p  ON p.pais_iso_3=psa.pais_iso_3
                             GROUP BY region_geografica
                             """
+
 #calculamos la cantidad de emigrantes argentinos
-flujo_emigrantes_por_pais=sql^"""SELECT p.pais_iso_3, SUM(CAST(fm.casos_2000 AS INTEGER)) AS flujo FROM paises_con_sedes_argentinas AS p
-                                   INNER JOIN flujos_migratorios AS fm ON p.pais_iso_3=fm.destino WHERE fm.origen='ARG' AND p.pais_iso_3!='ARG'
+flujo_emigrantes_por_pais=sql^"""SELECT p.pais_iso_3, SUM(CAST(fm.cantidad AS INTEGER)) AS flujo FROM paises_con_sedes_argentinas AS p
+                                   INNER JOIN flujos_migratorios AS fm ON p.pais_iso_3=fm.destino 
+                                   WHERE fm.origen='ARG' AND p.pais_iso_3!='ARG' AND fm.año=2000
                                    GROUP BY p.pais_iso_3
                                 """
 #agrupamos la cantidad de migrantes previamente calculada por region
-flujo_emigrantes_por_regiones=sql^ """SELECT DISTINCT u.region_geografica, SUM(fepp.flujo) AS flujo_regional
+flujo_emigrantes_por_regiones=sql^ """SELECT DISTINCT p.region_geografica, SUM(fepp.flujo) AS flujo_regional
                                       FROM flujo_emigrantes_por_pais AS fepp
-                                      INNER JOIN ubicacion AS u ON fepp.pais_iso_3=u.pais_iso_3
-                                      GROUP BY u.region_geografica"""
+                                      INNER JOIN pais AS p ON fepp.pais_iso_3=p.pais_iso_3
+                                      GROUP BY p.region_geografica"""
                                       
 #unimos los datos previamente calculado, les ponemos el nombre y ordenamos como pedia la consigna
 dataframe_resultado_ii=sql^ """SELECT DISTINCT fepg.region_geografica AS 'region geografica', 
@@ -402,8 +430,7 @@ dataframe_resultado_ii=sql^ """SELECT DISTINCT fepg.region_geografica AS 'region
                             ON r.region_geografica=fepg.region_geografica
                             ORDER BY "Promedio flujo con Argentina - Países con Sedes Argentinas" DESC""" 
                             
-                            
-dataframe_resultado_ii.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_2.csv', index=False)
+#dataframe_resultado_ii.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_2.csv', index=False)
 #%% Consulta iii)
 redes_por_sedes=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' THEN 'facebook' ELSE
                        CASE WHEN url LIKE '%Facebook%' THEN 'facebook' ELSE
@@ -416,18 +443,17 @@ redes_por_sedes=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' 
                        CASE WHEN url LIKE '%flickr%' THEN 'flickr' END END END END END END END END END AS red FROM red_social """ 
 
 #unimos las sedes con sus respectivos paises
-sedes_paises=sql^"""SELECT DISTINCT cp.pais, rps.sede_id FROM redes_por_sedes AS rps
-                INNER JOIN sedes AS s ON rps.sede_id=s.sede_id  
-                INNER JOIN codigos_paises AS cp ON s.pais_iso_3=cp.pais_iso_3"""
+sedes_paises=sql^"""SELECT DISTINCT p.nombre_pais, rps.sede_id FROM redes_por_sedes AS rps
+                INNER JOIN ubicada_en AS u ON rps.sede_id=u.sede_id  
+                INNER JOIN pais AS p ON u.pais_iso_3=p.pais_iso_3"""
 
 #unimos los datos previamente calculado, les ponemos el nombre y ordenamos como pedia la consigna
-dataframe_resultado_iii=sql^"""SELECT DISTINCT sp.pais, COUNT(DISTINCT rps.red) AS 'redes distintas' 
+dataframe_resultado_iii=sql^"""SELECT DISTINCT sp.nombre_pais as pais, COUNT(DISTINCT rps.red) AS 'redes distintas' 
                            FROM redes_por_sedes AS rps
                            INNER JOIN sedes_paises AS sp ON rps.sede_id=sp.sede_id 
-                           WHERE rps.red IS NOT NULL
-                           GROUP BY sp.pais """
+                           GROUP BY pais """
                            
-dataframe_resultado_iii.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_3.csv', index=False)
+#dataframe_resultado_iii.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_3.csv', index=False)
 #%% Consulta iv)
 redes_por_sedes_2=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' THEN 'facebook' ELSE
                        CASE WHEN url LIKE '%Facebook%' THEN 'facebook' ELSE
@@ -441,13 +467,12 @@ redes_por_sedes_2=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%
                      
 #reutilizamos la tabla sedes_paises del ejercicio anterior           
 
-dataframe_resultado_iv=sql^"""SELECT DISTINCT sp.pais, rps.sede_id, rps.red, rps.url 
+dataframe_resultado_iv=sql^"""SELECT DISTINCT sp.nombre_pais, rps.sede_id, rps.red, rps.url 
                            FROM redes_por_sedes_2 AS rps 
-                           INNER JOIN sedes_paises AS sp ON rps.sede_id=sp.sede_id
-                           WHERE rps.red IS NOT NULL 
-                           ORDER BY sp.pais ASC, rps.sede_id ASC, rps.red ASC, rps.url ASC """
+                           INNER JOIN sedes_paises AS sp ON rps.sede_id=sp.sede_id 
+                           ORDER BY sp.nombre_pais ASC, rps.sede_id ASC, rps.red ASC, rps.url ASC """
                            
-dataframe_resultado_iv.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_4.csv', index=False)
+#dataframe_resultado_iv.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_4.csv', index=False)
 
 #%%===========================================================================
 # GRAFICOS
@@ -564,7 +589,7 @@ for i in range (len(valores_regiones_ordenados)):
 
 #los_graficamos en orden
 fig, ax =plt.subplots(figsize=(18,6))
-ax.boxplot(datos_region_ordenados,label='mediana')
+ax.boxplot(datos_region_ordenados)
 ax.scatter(x=[1,2,3,4,5,6,7,8,9], y=[np.mean(x) for x in datos_region_ordenados], label='media', color='green')
 ax.set_xticks([1,2,3,4,5,6,7,8,9])
 ax.set_xticklabels(region_ordenada) 
