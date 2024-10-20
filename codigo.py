@@ -15,7 +15,7 @@ import numpy as np
 #=============================================================================
 
 #DATOS SEDES
-carpeta = "/Users/Usuario/Downloads/Tp_Labo/TablasOriginales/"
+carpeta = ".\\TablasOriginales\\"
 datos_basicos=pd.read_csv(carpeta+"Datos_sedes_basicos.csv")
 datos_completos=pd.read_csv(carpeta+"Datos_sedes_completos.csv")
 #arreglamos la linea 16 manualmente (ya que generaba un error al importar dicha base)
@@ -576,14 +576,16 @@ for i in range (len(valores_regiones_ordenados)):
 
 #los_graficamos en orden
 fig, ax =plt.subplots(figsize=(18,6))
-ax.boxplot(datos_region_ordenados)
+ax.boxplot(datos_region_ordenados, label='mediana')
 ax.scatter(x=[1,2,3,4,5,6,7,8,9], y=[np.mean(x) for x in datos_region_ordenados], label='media', color='green')
 ax.set_xticks([1,2,3,4,5,6,7,8,9])
 ax.set_xticklabels(region_ordenada) 
 plt.xticks(rotation=30)
+ax.legend(loc='lower left')
+ax.set_xlabel("Regiones geograficas")
+ax.set_ylabel("Flujo migratorio promedio")
+ax.set_title("Flujo migratorio promedio por regiones")
 plt.tight_layout()
-ax.legend()
-
 #%% Grafico iii)Flujos migratorios hacia argentina en el año 2000 y cantidad de sedes
 
 
