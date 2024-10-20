@@ -15,7 +15,7 @@ import numpy as np
 #=============================================================================
 
 #DATOS SEDES
-carpeta = "/Users/Usuario/Downloads/Tp_Labo/TablasOriginales/"
+carpeta = ".\\TablasOriginales\\"
 datos_basicos=pd.read_csv(carpeta+"Datos_sedes_basicos.csv")
 datos_completos=pd.read_csv(carpeta+"Datos_sedes_completos.csv")
 #arreglamos la linea 16 manualmente (ya que generaba un error al importar dicha base)
@@ -592,6 +592,22 @@ ax.legend()
 ax.set_xlabel("Regiones geográficas",fontsize= 16)
 ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
 ax.set_title("Flujo migratorio promedio por regiones",fontsize=19)
+plt.tight_layout()
+plt.show()
+#%% Grafico ii auxiliar 
+#America del Norte nos achata toda la escala queremos visualizar un grafico donde no participe
+region_ordenada.pop(0)
+datos_region_ordenados.pop(0)
+
+fig, ax =plt.subplots(figsize=(10,6))
+ax.boxplot(datos_region_ordenados, label='mediana')
+ax.scatter(x=[1,2,3,4,5,6,7,8], y=[np.mean(x) for x in datos_region_ordenados], label='media', color='green')
+ax.set_xticks([1,2,3,4,5,6,7,8])
+ax.set_xticklabels(region_ordenada,rotation=45,ha='right') 
+ax.legend()
+ax.set_xlabel("Regiones geográficas",fontsize= 16)
+ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
+ax.set_title("Flujo migratorio promedio por regiones auxiliar",fontsize=19)
 plt.tight_layout()
 plt.show()
 #%% Gráfico iii)
