@@ -78,7 +78,7 @@ metrica_migraciones=null_migraciones.shape[0]/datos_migraciones.shape[0]*100
 null_redes_sociales=(sql^ """Select redes_sociales FROM datos_completos WHERE redes_sociales IS NULL""").shape[0]
 metrica_redes_sociales=null_redes_sociales/datos_completos.shape[0]*100
 
-#DATOS BASICOS. METODO GQM
+#DATOS BÁSICOS. METODO GQM
 #Goal: que el dato correspondiente a la cantidad de secciones de cada sede esté completo.
 #Question: ¿Cuál es la proporción de sedes que tienen el dato correspondiente a "cantidad_secciones" vacío?
 #Metric : 37% (aproximadamente)
@@ -112,11 +112,11 @@ for index,rows in null_migraciones.iterrows():
 #rellenamos los valores None del campo redes_sociales por el separador
 datos_completos=datos_completos.fillna(value="//")
 
-#DATOS BASICOS
+#DATOS BÁSICOS
 #completamos los nulls de las sedes sin secciones con 0
 datos_basicos=datos_basicos.fillna(value="0")
         
-#ANALISIS DE METRICAS POST TRATAMIENTO
+#ANÁLISIS DE METRICAS POST TRATAMIENTO
 
 #DATOS MIGRACIONES
 #Metric: 0%
@@ -130,7 +130,7 @@ metrica_migraciones=null_migraciones.shape[0]/datos_migraciones.shape[0]
 null_redes_sociales=(sql^ """Select redes_sociales FROM datos_completos WHERE redes_sociales IS NULL""").shape[0]
 metrica_redes_sociales=null_redes_sociales/datos_completos.shape[0]
 
-#DATOS BASICOS
+#DATOS BÁSICOS
 #Metric: 0%
 null_secciones=(sql^ """Select cantidad_secciones FROM datos_basicos WHERE cantidad_secciones  IS NULL""").shape[0]
 metrica_secciones=null_secciones/datos_basicos.shape[0]
@@ -148,10 +148,10 @@ for index,row in datos_completos.iterrows():
    
     
    lista : str =datos_completos.loc[index]['redes_sociales']
-   posicion_actual : int=0 #posicion de los caracteres
-   longitud : int=len(lista) #longitud del la lista anidada a la relacion datos completos
+   posicion_actual : int=0 #posición de los caractéres
+   longitud : int=len(lista) #longitud de la lista anidada a la relación datos completos
    red : str="" #url de la red actual
-   en_red : bool=True #esta leyendo un caracter perteneciente a una Url valida
+   en_red : bool=True #esta leyendo un caractér perteneciente a una Url válida
    
    
    while lista[posicion_actual]==" ": #Url empezada en espacio
@@ -162,7 +162,7 @@ for index,row in datos_completos.iterrows():
            if (lista[posicion_actual]=="/" and lista[posicion_actual+1]=="/"):
                en_red : bool=True    
                posicion_actual+=4 
-       #primero se pregunta si no es null, luego si esta en una url valida y luego si es una posicion valida del string    
+       #primero se pregunta si no es null, luego si esta en una url valida y luego si es una posición válida del string    
        if ((lista[0]!="/") and en_red and posicion_actual<longitud):
            
            if ((lista[posicion_actual] == " ") and
@@ -172,7 +172,7 @@ for index,row in datos_completos.iterrows():
                    indexes.append(datos_completos.iloc[index]['sede_id']) #se guarda una copia del index al que pertenece la red 
                    redes.append(red) #la url de la red
                red="" #inicializa una nueva red
-               en_red=False #avisa que ya no esta mirando un caracter valido de url
+               en_red=False #avisa que ya no esta mirando un caracter válido de url
            
            else:
                if lista[posicion_actual]==" ":
@@ -191,7 +191,7 @@ red_social=pd.DataFrame(dict_sede_red_social)
 # FILTRADO DE DATOS DEL DATAFRAME red_social
 #=============================================================================
 #%% FILTRO 1
-#filtramos aquellas filas del dataFrame red_social donde el valor de la columna url no tiene una url "explicita" y
+#filtramos aquellas filas del dataFrame red_social donde el valor de la columna url no tiene una url "explícita" y
 #tiene como valor un nombre de usuario donde la primera letra es el simbolo @ y las quitamos del dataFrame red_social. 
 
 red_social_2 = sql^ """Select sede_id, url
@@ -319,7 +319,7 @@ red_social_3 = red_social_3[~((red_social_3['sede_id'] == sede_a_eliminar_5) & (
 red_social = pd.concat([red_social, red_social_2, red_social_3], ignore_index=True)
 
 #%%===========================================================================
-# CONSTRUCCION DE NUESTRA BASE DE DATOS SEGUN EL DER
+# CONSTRUCCIÓN DE NUESTRA BASE DE DATOS SEGUN EL DER
 #=============================================================================
 
 red_social_sede = red_social
@@ -327,7 +327,7 @@ red_social_sede = red_social
 sedes=sql^ """SELECT DISTINCT sede_id,cantidad_secciones 
             FROM datos_basicos"""
 
-#construccion de tabla flujos_migratorios utlizando la tabla datos_migraciones
+#construcción de tabla flujos_migratorios utlizando la tabla datos_migraciones
 año_1960= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1960 AS INTEGER) >=0 THEN 1960 END AS año ,casos_1960  AS cantidad FROM datos_migraciones"""
 año_1970= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1970 AS INTEGER) >=0 THEN 1970 END AS año ,casos_1970  AS cantidad FROM datos_migraciones"""
 año_1980= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1980 AS INTEGER) >=0 THEN 1980 END AS año ,casos_1980  AS cantidad FROM datos_migraciones"""
@@ -357,7 +357,7 @@ ubicada_en=sql^"""SELECT DISTINCT sede_id, pais_iso_3 FROM datos_basicos"""
 #%%
 #Consulta i)
 
-#contamos la cantidad de sedes argentinas en cada pais y la suma de sus secciones
+#contamos la cantidad de sedes argentinas en cada país y la suma de sus secciones
 sedes_por_paises=sql^"""SELECT DISTINCT p.nombre_pais, COUNT(u.sede_id) AS sedes,
                             SUM(CAST(s.cantidad_secciones AS INTEGER)) as secciones
                             FROM ubicada_en AS u
@@ -366,7 +366,7 @@ sedes_por_paises=sql^"""SELECT DISTINCT p.nombre_pais, COUNT(u.sede_id) AS sedes
                             GROUP BY p.nombre_pais
                             """ 
                             
-#calculamos el flujo de emigrantes de cada pais
+#calculamos el flujo de emigrantes de cada país
 flujo_emigrantes=sql^"""SELECT p.nombre_pais, sum(CAST(cantidad AS INTEGER)) AS emigrantes FROM flujos_migratorios AS fm
                         INNER JOIN pais p ON p.pais_iso_3= fm.origen
                         WHERE año=2000
@@ -374,7 +374,7 @@ flujo_emigrantes=sql^"""SELECT p.nombre_pais, sum(CAST(cantidad AS INTEGER)) AS 
                         """
 
                       
-#calculamos el flujo de imigrantes de cada pais                       
+#calculamos el flujo de imigrantes de cada país                       
 flujo_inmigrantes=sql^"""SELECT p.nombre_pais, sum(CAST(cantidad AS INTEGER)) AS inmigrantes FROM flujos_migratorios AS fm
                         INNER JOIN pais p ON p.pais_iso_3= fm.destino
                         WHERE año=2000
@@ -396,7 +396,7 @@ dataframe_resultado_i=sql^ """SELECT DISTINCT spp.nombre_pais AS pais,spp.sedes,
 
 paises_con_sedes_argentinas=sql^"""SELECT DISTINCT pais_iso_3 FROM ubicada_en"""
 
-#la cantidad de paises con sedes agrupadas por region
+# cantidad de países con sedes agrupadas por región
 regiones=sql^ """SELECT DISTINCT p.region_geografica, count(psa.pais_iso_3) AS paises FROM paises_con_sedes_argentinas AS psa
                             INNER JOIN pais AS p  ON p.pais_iso_3=psa.pais_iso_3
                             GROUP BY region_geografica
@@ -408,7 +408,7 @@ flujo_emigrantes_por_pais=sql^"""SELECT p.pais_iso_3, SUM(CAST(fm.cantidad AS IN
                                    WHERE fm.origen='ARG' AND p.pais_iso_3!='ARG' AND fm.año=2000
                                    GROUP BY p.pais_iso_3
                                 """
-#agrupamos la cantidad de emigrantes previamente calculada por region
+#agrupamos la cantidad de emigrantes previamente calculada por región
 flujo_emigrantes_por_regiones=sql^ """SELECT DISTINCT p.region_geografica, SUM(fepp.flujo) AS flujo_regional
                                       FROM flujo_emigrantes_por_pais AS fepp
                                       INNER JOIN pais AS p ON fepp.pais_iso_3=p.pais_iso_3
@@ -434,7 +434,7 @@ redes_por_sedes=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' 
                        CASE WHEN url LIKE '%gmail%' THEN 'gmail' ELSE
                        CASE WHEN url LIKE '%flickr%' THEN 'flickr' END END END END END END END END END AS red FROM red_social_sede """ 
 
-#unimos las sedes con sus respectivos paises
+#unimos las sedes con sus respectivos países
 sedes_paises=sql^"""SELECT DISTINCT p.nombre_pais, rps.sede_id FROM redes_por_sedes AS rps
                 INNER JOIN ubicada_en AS u ON rps.sede_id=u.sede_id  
                 INNER JOIN pais AS p ON u.pais_iso_3=p.pais_iso_3"""
@@ -458,7 +458,6 @@ redes_por_sedes_2=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%
                        CASE WHEN url LIKE '%flickr%' THEN 'flickr' END END END END END END END END END AS red, url FROM red_social_sede """ 
                      
 #reutilizamos la tabla sedes_paises del ejercicio anterior           
-
 dataframe_resultado_iv=sql^"""SELECT DISTINCT sp.nombre_pais, rps.sede_id, rps.red, rps.url 
                            FROM redes_por_sedes_2 AS rps 
                            INNER JOIN sedes_paises AS sp ON rps.sede_id=sp.sede_id 
@@ -466,10 +465,11 @@ dataframe_resultado_iv=sql^"""SELECT DISTINCT sp.nombre_pais, rps.sede_id, rps.r
                            
 
 #%%===========================================================================
-# GRAFICOS
+# GRÁFICOS
 #=============================================================================
 #%%
-# Grafico i)Cantidad de sedes por región geográfica
+# Gráfico i)
+#Consultas sql para crear luego el gráfico 
 
 #buscamos la cantidad de sedes por regiones
 sedes_por_codigo_pais=sql^ """SELECT DISTINCT pais_iso_3, COUNT(sede_id) AS cantidad_de_sedes
@@ -503,13 +503,15 @@ plt.ylim(0,max(sedes_por_region['sedes']*1.1))
 plt.tight_layout()
 plt.show()
 
-#%%Grafico ii)Cantidad de flujo migratorio promedio por region
-#Hacemos una tabla con origenes y destinos con sedes argentinas
+#%%Gráfico ii)
+#Consultas sql para crear luego el gráfico 
+
+#hacemos una tabla con origenes y destinos con sedes argentinas
 paises_objetivo=sql^ """SELECT DISTINCT origen,destino FROM flujos_migratorios
                         INNER JOIN paises_con_sedes_argentinas ON origen=pais_iso_3 
                         WHERE destino IN (SELECT DISTINCT pais_iso_3 FROM paises_con_sedes_argentinas)"""
                 
-#Necesitamos sumar todas las emigraciones independientemente del año en cada pais con almenos una sede argentina
+#necesitamos sumar todas las emigraciones independientemente del año en cada pais con almenos una sede argentina
 flujo_emigratorio=sql^ """SELECT DISTINCT p.origen , 
                           SUM(CAST(fm.cantidad AS INTEGER)) AS flujo_emi
                           FROM paises_objetivo AS p 
@@ -527,7 +529,7 @@ flujo_inmigratorio=sql^ """SELECT DISTINCT p.destino ,
                           GROUP BY p.destino 
                         """
 
-#Calculamos el promedio
+#calculamos el promedio
 flujo_migratorio_paises=sql^""" SELECT fe.origen, (flujo_inmi - flujo_emi)/5 AS flujo_migratorio 
                                 FROM flujo_emigratorio AS fe
                                 INNER JOIN flujo_inmigratorio AS fi ON fe.origen=fi.destino"""
@@ -538,7 +540,7 @@ flujo_promedio_por_regiones=sql^"""SELECT DISTINCT p.region_geografica, flujo_mi
                                 ON p.pais_iso_3=f.origen
                                 """
 
-#Van  a ser la regiones sobre las que vamos a hacer los boxplot
+#van a ser la regiones sobre las que vamos a hacer los boxplot
 regiones_objetivo=sql^"""SELECT DISTINCT region_geografica FROM flujo_promedio_por_regiones """
 
 
@@ -592,14 +594,18 @@ ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
 ax.set_title("Flujo migratorio promedio por regiones",fontsize=19)
 plt.tight_layout()
 plt.show()
-#%% Grafico iii)Flujos migratorios hacia argentina en el año 2000 y cantidad de sedes
+#%% Gráfico iii)
+#Consultas sql para crear luego el gráfico 
 
 flujo_migratorio_hacia_argentina=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
                                         WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad !=0"""
-#tomamos la decision de ignorar los registros con 0 flujo migratorio
+                                        
+#tomamos la decisión de ignorar los registros con 0 flujo migratorio
+
 chequeo=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
-                                        WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad =0"""
-#ya que solo tienen una sede con 0 inmigracion
+                              WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad =0"""
+#ya que solo tienen una sede con 0 inmigración
+
 df_chequeo=sql^"""SELECT origen, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
                   INNER JOIN chequeo ON origen=pais_iso_3"""
 
