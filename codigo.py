@@ -15,7 +15,7 @@ import numpy as np
 #=============================================================================
 
 #DATOS SEDES
-carpeta = ".\\TablasOriginales\\"
+carpeta = "/Users/Usuario/Downloads/Tp_Labo/TablasOriginales/"
 datos_basicos=pd.read_csv(carpeta+"Datos_sedes_basicos.csv")
 datos_completos=pd.read_csv(carpeta+"Datos_sedes_completos.csv")
 #arreglamos la linea 16 manualmente (ya que generaba un error al importar dicha base)
@@ -382,7 +382,7 @@ flujo_inmigrantes=sql^"""SELECT p.nombre_pais, sum(CAST(cantidad AS INTEGER)) AS
                         """
                         
 #calculamos el flujo migratorio neto                        
-flujo_migratorio_neto=sql^"""SELECT DISTINCT fe.nombre_pais,fe.emigrantes-fi.inmigrantes AS neto FROM flujo_emigrantes AS fe
+flujo_migratorio_neto=sql^"""SELECT DISTINCT fe.nombre_pais,fi.inmigrantes - fe.emigrantes AS neto FROM flujo_emigrantes AS fe
                             INNER JOIN flujo_inmigrantes AS fi ON fe.nombre_pais=fi.nombre_pais """
 
 #unimos todo en el resultado                            
@@ -390,7 +390,6 @@ dataframe_resultado_i=sql^ """SELECT DISTINCT spp.nombre_pais AS pais,spp.sedes,
                             fmn.neto AS  'Flujo Migratorio Neto' FROM sedes_por_paises AS spp
                             INNER JOIN flujo_migratorio_neto AS fmn ON spp.nombre_pais=fmn.nombre_pais
                             ORDER BY spp.sedes DESC, spp.nombre_pais ASC"""
-
 
 
 #%% Consulta ii)
@@ -409,7 +408,7 @@ flujo_emigrantes_por_pais=sql^"""SELECT p.pais_iso_3, SUM(CAST(fm.cantidad AS IN
                                    WHERE fm.origen='ARG' AND p.pais_iso_3!='ARG' AND fm.año=2000
                                    GROUP BY p.pais_iso_3
                                 """
-#agrupamos la cantidad de migrantes previamente calculada por region
+#agrupamos la cantidad de emigrantes previamente calculada por region
 flujo_emigrantes_por_regiones=sql^ """SELECT DISTINCT p.region_geografica, SUM(fepp.flujo) AS flujo_regional
                                       FROM flujo_emigrantes_por_pais AS fepp
                                       INNER JOIN pais AS p ON fepp.pais_iso_3=p.pais_iso_3
@@ -489,19 +488,20 @@ sedes_por_region=sql^ """SELECT DISTINCT s.region_geografica, SUM(s.cantidad_de_
                             GROUP BY s.region_geografica ORDER BY sedes DESC """
 sedes_por_region.loc[7,'region_geografica']='ÁFRICA  DEL  NORTE \n Y  CERCANO  ORIENTE'
 
+#creamos el gráfico
 fig, ax = plt.subplots(figsize=(10,8))
-ax.bar(x=sedes_por_region['region_geografica'],height=sedes_por_region['sedes'], label='sedes')
+ax.bar(x=sedes_por_region['region_geografica'],height=sedes_por_region['sedes'], label='cantidad de sedes')
 for i, valor in enumerate(sedes_por_region['sedes']):
     plt.text(i, valor + 1, str(int(valor)), ha='center', va='bottom')
 ax.legend() #genera la legenda usando la label
-ax.set_ylabel('Cantidad de sedes',fontsize=12)
-ax.set_xlabel('Region geografica',fontsize=12)
+ax.set_ylabel('Cantidad de sedes',fontsize=16)
+ax.set_xlabel('Region geografica',fontsize=16)
 ax.set_xticklabels(sedes_por_region['region_geografica'],rotation=60,ha='right')
 ax.set_title('Cantidad de sedes por región geográfica',fontsize=19)
 ax.legend()
 plt.ylim(0,max(sedes_por_region['sedes']*1.1))
 plt.tight_layout()
-#ajusta el tamaño del figure para que las etiquetas entren bien
+plt.show()
 
 #%%Grafico ii)Cantidad de flujo migratorio promedio por region
 #Hacemos una tabla con origenes y destinos con sedes argentinas
@@ -528,7 +528,7 @@ flujo_inmigratorio=sql^ """SELECT DISTINCT p.destino ,
                         """
 
 #Calculamos el promedio
-flujo_migratorio_paises=sql^""" SELECT fe.origen, (flujo_emi-flujo_inmi)/5 AS flujo_migratorio 
+flujo_migratorio_paises=sql^""" SELECT fe.origen, (flujo_inmi - flujo_emi)/5 AS flujo_migratorio 
                                 FROM flujo_emigratorio AS fe
                                 INNER JOIN flujo_inmigratorio AS fi ON fe.origen=fi.destino"""
 
@@ -580,45 +580,26 @@ for i in range (len(valores_regiones_ordenados)):
     datos_region_ordenados.append(valores_regiones_ordenados[i][1])
 
 
-#los_graficamos en orden
+#creamos el gráfico
 fig, ax =plt.subplots(figsize=(10,6))
 ax.boxplot(datos_region_ordenados, label='mediana')
 ax.scatter(x=[1,2,3,4,5,6,7,8,9], y=[np.mean(x) for x in datos_region_ordenados], label='media', color='green')
 ax.set_xticks([1,2,3,4,5,6,7,8,9])
 ax.set_xticklabels(region_ordenada,rotation=45,ha='right') 
-ax.legend(loc='lower left')
-ax.set_xlabel("Regiones geograficas")
-ax.set_ylabel("Flujo migratorio promedio")
-ax.set_title("Flujo migratorio promedio \n hacia Argentina por regiones",fontsize=21)
-plt.tight_layout()
-#%% Grafico iii)Flujos migratorios hacia argentina en el año 2000 y cantidad de sedes
-flujo_migratorio_hacia_argentina=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
-                                        WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad !=0"""
-#tomamos la decision de ignorar los registros con 0 flujo migratorio
-chequeo=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
-                                        WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad =0"""
-#ya que solo tienen una sede con 0 migracion
-df_chequeo=sql^"""SELECT origen, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
-                  INNER JOIN chequeo ON origen=pais_iso_3"""
-
-df_grafico=sql^"""SELECT nombre_pais, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
-                  INNER JOIN flujo_migratorio_hacia_argentina ON origen=pais_iso_3
-                  INNER JOIN pais AS p ON p.pais_iso_3=origen """
-
-fig,ax = plt.subplots(figsize=(10,8))
-ax.scatter(x=np.linspace(1,48,num=48),y=df_grafico['cantidad'].apply(int),s=5*df_grafico['cantidad_de_sedes'].apply(int), label='sedes')
 ax.legend()
-ax.set_xticks(np.linspace(1,48,num=48))
-ax.set_xticklabels(df_grafico['nombre_pais'],rotation=90)
-plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
+ax.set_xlabel("Regiones geográficas",fontsize= 16)
+ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
+ax.set_title("Flujo migratorio promedio por regiones",fontsize=19)
 plt.tight_layout()
-#%%
+plt.show()
+#%% Grafico iii)Flujos migratorios hacia argentina en el año 2000 y cantidad de sedes
+
 flujo_migratorio_hacia_argentina=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
                                         WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad !=0"""
 #tomamos la decision de ignorar los registros con 0 flujo migratorio
 chequeo=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
                                         WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad =0"""
-#ya que solo tienen una sede con 0 migracion
+#ya que solo tienen una sede con 0 inmigracion
 df_chequeo=sql^"""SELECT origen, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
                   INNER JOIN chequeo ON origen=pais_iso_3"""
 
@@ -626,6 +607,7 @@ df_grafico=sql^"""SELECT nombre_pais, cantidad, cantidad_de_sedes FROM sedes_por
                   INNER JOIN flujo_migratorio_hacia_argentina ON origen=pais_iso_3
                   INNER JOIN pais AS p ON p.pais_iso_3=origen """
 
+#creamos el gráfico
 fig,ax = plt.subplots(figsize=(10,8))
 ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,1000,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int), label='Flujo inmigratorio por paises')
 size_legend = ax.scatter([], [],color='blue' ,s=100, alpha=0.7, label='Cantidad de Sedes')
@@ -634,8 +616,8 @@ ax.set_yticks(np.linspace(1,1000,num=len(df_grafico['nombre_pais'])))
 ax.set_yticklabels(df_grafico['nombre_pais'])
 plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
 ax.legend()
-ax.set_title('Flujo inmigratorio hacia Argentina \n y cantidad de sedes por paises', fontsize=21)
-ax.set_ylabel('Paises')
-ax.set_xlabel('flujo inmigratorio')
-
+ax.set_title('Flujo migratorio hacia Argentina \n y cantidad de sedes por paises', fontsize=19)
+ax.set_ylabel('Paises',fontsize=14)
+ax.set_xlabel('Flujo inmigratorio', fontsize= 14)
 plt.tight_layout()
+plt.show()
