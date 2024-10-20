@@ -627,12 +627,15 @@ df_grafico=sql^"""SELECT nombre_pais, cantidad, cantidad_de_sedes FROM sedes_por
                   INNER JOIN pais AS p ON p.pais_iso_3=origen """
 
 fig,ax = plt.subplots(figsize=(10,8))
-ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,1000,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int), label='Flujo migratorio por paises')
+ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,1000,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int), label='Flujo inmigratorio por paises')
 size_legend = ax.scatter([], [],color='blue' ,s=100, alpha=0.7, label='Cantidad de Sedes')
  
 ax.set_yticks(np.linspace(1,1000,num=len(df_grafico['nombre_pais'])))
 ax.set_yticklabels(df_grafico['nombre_pais'])
 plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
 ax.legend()
-# Ajustar el espacio vertical entre las etiquetas
+ax.set_title('Flujo inmigratorio hacia Argentina \n y cantidad de sedes por paises', fontsize=21)
+ax.set_ylabel('Paises')
+ax.set_xlabel('flujo inmigratorio')
+
 plt.tight_layout()
