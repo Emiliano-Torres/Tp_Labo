@@ -1,7 +1,6 @@
 
 # -*- coding: utf-8 -*-
-"""Created on Fri Sep 20 14:08:46 2024
-
+"""
 ALUMNOS: Emiliano Torres, Matilda Bartoli y Sofia Copaga
 GRUPO : EQUIPO ROCKET
 """
@@ -62,7 +61,7 @@ datos_migraciones=sql^ """SELECT DISTINCT origen, destino, casos_1960,casos_1970
 
 #DATOS MIGRACIONES. METODO GQM
 #Goal: que los datos correspondientes a las columnas de casos por año posean datos de tipo numerico. 
-#Question: ¿Cuál es la proporción de filas que tienen los datos correspondientes a las columnas de los casos por años igual al simbolo ".."? 
+#Question: ¿Cuál es la proporción de filas que tienen los datos correspondientes a las columnas de los casos por año igual al simbolo ".."? 
 #Metric = 4% (aproximadamente)
 
 null_migraciones=datos_migraciones[(datos_migraciones['casos_1960']=='..') | (datos_migraciones['casos_1970']=='..')
@@ -71,7 +70,7 @@ null_migraciones=datos_migraciones[(datos_migraciones['casos_1960']=='..') | (da
 metrica_migraciones=null_migraciones.shape[0]/datos_migraciones.shape[0]*100
 
 
-#DATOS COMPLETOS . METODO GQM
+#DATOS COMPLETOS. METODO GQM
 #Goal: que el dato correspondiente a la red social de cada sede esté completo. 
 #Question: ¿Cuál es la proporción de sedes que tienen el dato correspondiente a “redes_sociales” vacío?
 #Metric : 24% (aproximadamente)
@@ -91,7 +90,7 @@ metrica_secciones=null_secciones/datos_basicos.shape[0]*100
 #%%===========================================================================
 # MEJORA DE CALIDAD DE DATOS- TRATAMIENTO DE NULLS
 #=============================================================================
-#DATOS MIGRACIONES.
+#DATOS MIGRACIONES
 #remplazamos los nulls expresados como .. por 0
 for index,rows in null_migraciones.iterrows():
     if datos_migraciones.loc[index,'casos_1960']=='..':
@@ -319,12 +318,9 @@ red_social_3 = red_social_3[~((red_social_3['sede_id'] == sede_a_eliminar_5) & (
 #concatenamos los 3 dataFrames
 red_social = pd.concat([red_social, red_social_2, red_social_3], ignore_index=True)
 
-
 #%%===========================================================================
 # CONSTRUCCION DE NUESTRA BASE DE DATOS SEGUN EL DER
 #=============================================================================
-
-#red_social_sede representa la relacion del DER "tiene" entre sede y red social
 
 red_social_sede = red_social
 
@@ -360,8 +356,8 @@ ubicada_en=sql^"""SELECT DISTINCT sede_id, pais_iso_3 FROM datos_basicos"""
 #=============================================================================
 #%%
 #Consulta i)
-#contamos la cantidad de sedes argentinas en cada pais y la suma de sus secciones
 
+#contamos la cantidad de sedes argentinas en cada pais y la suma de sus secciones
 sedes_por_paises=sql^"""SELECT DISTINCT p.nombre_pais, COUNT(u.sede_id) AS sedes,
                             SUM(CAST(s.cantidad_secciones AS INTEGER)) as secciones
                             FROM ubicada_en AS u
@@ -448,8 +444,9 @@ sedes_paises=sql^"""SELECT DISTINCT p.nombre_pais, rps.sede_id FROM redes_por_se
 dataframe_resultado_iii=sql^"""SELECT DISTINCT sp.nombre_pais as pais, COUNT(DISTINCT rps.red) AS 'redes distintas' 
                            FROM redes_por_sedes AS rps
                            INNER JOIN sedes_paises AS sp ON rps.sede_id=sp.sede_id 
-                           GROUP BY pais """
-                           
+                           GROUP BY pais
+                           ORDER BY COUNT(DISTINCT rps.red) DESC """
+
 
 #%% Consulta iv)
 redes_por_sedes_2=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' THEN 'facebook' ELSE
@@ -469,7 +466,6 @@ dataframe_resultado_iv=sql^"""SELECT DISTINCT sp.nombre_pais, rps.sede_id, rps.r
                            INNER JOIN sedes_paises AS sp ON rps.sede_id=sp.sede_id 
                            ORDER BY sp.nombre_pais ASC, rps.sede_id ASC, rps.red ASC, rps.url ASC """
                            
-
 
 #%%===========================================================================
 # GRAFICOS
