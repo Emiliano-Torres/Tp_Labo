@@ -478,7 +478,7 @@ sedes_por_codigo_pais=sql^ """SELECT DISTINCT pais_iso_3, COUNT(sede_id) AS cant
 
 #agrupamos por regiones, no lo hacemos en una consulta ya que al no unir por claves se generan tuplas espureas
 #lo que modificaria el valor del count
-sedes_por_region_aux=sql^ """SELECT DISTINCT p.region_geografica, s.cantidad_de_sedes 
+sedes_por_region_aux=sql^ """SELECT p.region_geografica, s.cantidad_de_sedes 
                             FROM sedes_por_codigo_pais AS s 
                             INNER JOIN pais AS p
                             ON s.pais_iso_3 = p.pais_iso_3
@@ -487,15 +487,21 @@ sedes_por_region_aux=sql^ """SELECT DISTINCT p.region_geografica, s.cantidad_de_
 sedes_por_region=sql^ """SELECT DISTINCT s.region_geografica, SUM(s.cantidad_de_sedes) AS sedes
                             FROM sedes_por_region_aux AS s
                             GROUP BY s.region_geografica ORDER BY sedes DESC """
+sedes_por_region.loc[7,'region_geografica']='ÁFRICA  DEL  NORTE \n Y  CERCANO  ORIENTE'
+
 fig, ax = plt.subplots(figsize=(10,8))
-ax.bar(x=sedes_por_region['region_geografica'],height=sedes_por_region['sedes'],label='sedes')
+ax.bar(x=sedes_por_region['region_geografica'],height=sedes_por_region['sedes'], label='sedes')
+for i, valor in enumerate(sedes_por_region['sedes']):
+    plt.text(i, valor + 1, str(int(valor)), ha='center', va='bottom')
 ax.legend() #genera la legenda usando la label
-ax.set_xlabel('Region geografica',fontsize=12)
 ax.set_ylabel('Cantidad de sedes',fontsize=12)
-ax.set_xticklabels(sedes_por_region['region_geografica'],rotation=60) 
+ax.set_xlabel('Region geografica',fontsize=12)
+ax.set_xticklabels(sedes_por_region['region_geografica'],rotation=60,ha='right')
 ax.set_title('Cantidad de sedes por región geográfica',fontsize=19)
 ax.legend()
-fig.tight_layout() #ajusta el tamaño del figure para que las etiquetas entren bien
+plt.ylim(0,max(sedes_por_region['sedes']*1.1))
+plt.tight_layout()
+#ajusta el tamaño del figure para que las etiquetas entren bien
 
 #%%Grafico ii)Cantidad de flujo migratorio promedio por region
 #Hacemos una tabla con origenes y destinos con sedes argentinas
@@ -575,23 +581,22 @@ for i in range (len(valores_regiones_ordenados)):
 
 
 #los_graficamos en orden
-fig, ax =plt.subplots(figsize=(18,6))
+fig, ax =plt.subplots(figsize=(10,6))
 ax.boxplot(datos_region_ordenados, label='mediana')
 ax.scatter(x=[1,2,3,4,5,6,7,8,9], y=[np.mean(x) for x in datos_region_ordenados], label='media', color='green')
 ax.set_xticks([1,2,3,4,5,6,7,8,9])
-ax.set_xticklabels(region_ordenada) 
-plt.xticks(rotation=30)
+ax.set_xticklabels(region_ordenada,rotation=45,ha='right') 
 ax.legend(loc='lower left')
 ax.set_xlabel("Regiones geograficas")
 ax.set_ylabel("Flujo migratorio promedio")
-ax.set_title("Flujo migratorio promedio por regiones")
+ax.set_title("Flujo migratorio promedio \n hacia Argentina por regiones",fontsize=21)
 plt.tight_layout()
 #%% Grafico iii)Flujos migratorios hacia argentina en el año 2000 y cantidad de sedes
-
-
-
-
-
+flujo_emigrantes_por_pais=sql^"""SELECT p.pais_iso_3, SUM(CAST(fm.cantidad AS INTEGER)) AS flujo FROM paises_con_sedes_argentinas AS p
+                                   INNER JOIN flujos_migratorios AS fm ON p.pais_iso_3=fm.destino 
+                                   WHERE fm.origen='ARG' AND p.pais_iso_3!='ARG' AND fm.año=2000
+                                   GROUP BY p.pais_iso_3
+                                ""
 
 
 
