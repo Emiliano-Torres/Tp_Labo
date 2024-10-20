@@ -592,16 +592,23 @@ ax.set_ylabel("Flujo migratorio promedio")
 ax.set_title("Flujo migratorio promedio \n hacia Argentina por regiones",fontsize=21)
 plt.tight_layout()
 #%% Grafico iii)Flujos migratorios hacia argentina en el año 2000 y cantidad de sedes
-flujo_emigrantes_por_pais=sql^"""SELECT p.pais_iso_3, SUM(CAST(fm.cantidad AS INTEGER)) AS flujo FROM paises_con_sedes_argentinas AS p
-                                   INNER JOIN flujos_migratorios AS fm ON p.pais_iso_3=fm.destino 
-                                   WHERE fm.origen='ARG' AND p.pais_iso_3!='ARG' AND fm.año=2000
-                                   GROUP BY p.pais_iso_3
-                                ""
+flujo_migratorio_hacia_argentina=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
+                                        WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad !=0"""
+#tomamos la decision de ignorar los registros con 0 flujo migratorio
+chequeo=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
+                                        WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad =0"""
+#ya que solo tienen una sede con 0 migracion
+df_chequeo=sql^"""SELECT origen, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
+                  INNER JOIN chequeo ON origen=pais_iso_3"""
 
+df_grafico=sql^"""SELECT nombre_pais, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
+                  INNER JOIN flujo_migratorio_hacia_argentina ON origen=pais_iso_3
+                  INNER JOIN pais AS p ON p.pais_iso_3=origen """
 
-
-
-
-
-
-
+fig,ax = plt.subplots(figsize=(10,8))
+ax.scatter(x=np.linspace(1,48,num=48),y=df_grafico['cantidad'].apply(int),s=5*df_grafico['cantidad_de_sedes'].apply(int), label='sedes')
+ax.legend()
+ax.set_xticks(np.linspace(1,48,num=48))
+ax.set_xticklabels(df_grafico['nombre_pais'],rotation=90)
+plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
+plt.tight_layout()
