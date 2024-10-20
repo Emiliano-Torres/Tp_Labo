@@ -447,7 +447,6 @@ dataframe_resultado_iii=sql^"""SELECT DISTINCT sp.nombre_pais as pais, COUNT(DIS
                            GROUP BY pais
                            ORDER BY COUNT(DISTINCT rps.red) DESC """
 
-
 #%% Consulta iv)
 redes_por_sedes_2=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' THEN 'facebook' ELSE
                        CASE WHEN url LIKE '%Facebook%' THEN 'facebook' ELSE
