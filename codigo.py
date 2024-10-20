@@ -16,8 +16,8 @@ import numpy as np
 #=============================================================================
 
 #DATOS SEDES
-carpeta = "/home/Estudiante/Tp_Labo/"
-datos_basicos=pd.read_csv(carpeta+"lista-sedes.csv")
+carpeta = "/Users/Usuario/Downloads/Tp_Labo/TablasOriginales/"
+datos_basicos=pd.read_csv(carpeta+"Datos_sedes_basicos.csv")
 datos_completos=pd.read_csv(carpeta+"Datos_sedes_completos.csv")
 #arreglamos la linea 16 manualmente (ya que generaba un error al importar dicha base)
 datos_secciones=pd.read_csv(carpeta+"Datos_sedes_secciones.csv")
@@ -325,6 +325,7 @@ red_social = pd.concat([red_social, red_social_2, red_social_3], ignore_index=Tr
 #=============================================================================
 
 #red_social_sede representa la relacion del DER "tiene" entre sede y red social
+
 red_social_sede = red_social
 
 sedes=sql^ """SELECT DISTINCT sede_id,cantidad_secciones 
@@ -394,7 +395,7 @@ dataframe_resultado_i=sql^ """SELECT DISTINCT spp.nombre_pais AS pais,spp.sedes,
                             INNER JOIN flujo_migratorio_neto AS fmn ON spp.nombre_pais=fmn.nombre_pais
                             ORDER BY spp.sedes DESC, spp.nombre_pais ASC"""
 
-#dataframe_resultado_i.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_1.csv', index=False)
+
 
 #%% Consulta ii)
 
@@ -426,7 +427,7 @@ dataframe_resultado_ii=sql^ """SELECT DISTINCT fepg.region_geografica AS 'region
                             ON r.region_geografica=fepg.region_geografica
                             ORDER BY "Promedio flujo con Argentina - Países con Sedes Argentinas" DESC""" 
                             
-#dataframe_resultado_ii.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_2.csv', index=False)
+
 #%% Consulta iii)
 redes_por_sedes=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' THEN 'facebook' ELSE
                        CASE WHEN url LIKE '%Facebook%' THEN 'facebook' ELSE
@@ -436,7 +437,7 @@ redes_por_sedes=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' 
                        CASE WHEN url LIKE '%youtube%' THEN 'youtube' ELSE
                        CASE WHEN url LIKE '%linkedin%' THEN 'linkedin' ELSE
                        CASE WHEN url LIKE '%gmail%' THEN 'gmail' ELSE
-                       CASE WHEN url LIKE '%flickr%' THEN 'flickr' END END END END END END END END END AS red FROM red_social """ 
+                       CASE WHEN url LIKE '%flickr%' THEN 'flickr' END END END END END END END END END AS red FROM red_social_sede """ 
 
 #unimos las sedes con sus respectivos paises
 sedes_paises=sql^"""SELECT DISTINCT p.nombre_pais, rps.sede_id FROM redes_por_sedes AS rps
@@ -449,7 +450,7 @@ dataframe_resultado_iii=sql^"""SELECT DISTINCT sp.nombre_pais as pais, COUNT(DIS
                            INNER JOIN sedes_paises AS sp ON rps.sede_id=sp.sede_id 
                            GROUP BY pais """
                            
-#dataframe_resultado_iii.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_3.csv', index=False)
+
 #%% Consulta iv)
 redes_por_sedes_2=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%' THEN 'facebook' ELSE
                        CASE WHEN url LIKE '%Facebook%' THEN 'facebook' ELSE
@@ -459,7 +460,7 @@ redes_por_sedes_2=sql^"""SELECT DISTINCT sede_id, CASE WHEN url LIKE '%facebook%
                        CASE WHEN url LIKE '%youtube%' THEN 'youtube' ELSE
                        CASE WHEN url LIKE '%linkedin%' THEN 'linkedin' ELSE
                        CASE WHEN url LIKE '%gmail%' THEN 'gmail' ELSE
-                       CASE WHEN url LIKE '%flickr%' THEN 'flickr' END END END END END END END END END AS red, url FROM red_social """ 
+                       CASE WHEN url LIKE '%flickr%' THEN 'flickr' END END END END END END END END END AS red, url FROM red_social_sede """ 
                      
 #reutilizamos la tabla sedes_paises del ejercicio anterior           
 
@@ -468,7 +469,7 @@ dataframe_resultado_iv=sql^"""SELECT DISTINCT sp.nombre_pais, rps.sede_id, rps.r
                            INNER JOIN sedes_paises AS sp ON rps.sede_id=sp.sede_id 
                            ORDER BY sp.nombre_pais ASC, rps.sede_id ASC, rps.red ASC, rps.url ASC """
                            
-#dataframe_resultado_iv.to_csv('/Users/Usuario/Downloads/Tp_Labo/consulta_4.csv', index=False)
+
 
 #%%===========================================================================
 # GRAFICOS
