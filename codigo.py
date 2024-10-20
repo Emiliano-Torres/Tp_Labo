@@ -15,7 +15,7 @@ import numpy as np
 #=============================================================================
 
 #DATOS SEDES
-carpeta = ".\\TablasOriginales\\"
+carpeta = "/Users/Usuario/Downloads/Tp_Labo/TablasOriginales/"
 datos_basicos=pd.read_csv(carpeta+"Datos_sedes_basicos.csv")
 datos_completos=pd.read_csv(carpeta+"Datos_sedes_completos.csv")
 #arreglamos la linea 16 manualmente (ya que generaba un error al importar dicha base)
@@ -595,7 +595,7 @@ ax.set_title("Flujo migratorio promedio por regiones",fontsize=19)
 plt.tight_layout()
 plt.show()
 #%% Grafico ii auxiliar 
-#America del Norte nos achata toda la escala queremos visualizar un grafico donde no participe
+#America del Norte nos achata toda la escala entonces queremos visualizar un grafico donde no participe
 region_ordenada.pop(0)
 datos_region_ordenados.pop(0)
 
