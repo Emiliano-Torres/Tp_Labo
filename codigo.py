@@ -15,7 +15,7 @@ import numpy as np
 #=============================================================================
 
 #DATOS SEDES
-carpeta = "/Users/Usuario/Downloads/Tp_Labo/TablasOriginales/"
+carpeta = ".\\TablasOriginales\\"
 datos_basicos=pd.read_csv(carpeta+"Datos_sedes_basicos.csv")
 datos_completos=pd.read_csv(carpeta+"Datos_sedes_completos.csv")
 #arreglamos la linea 16 manualmente (ya que generaba un error al importar dicha base)
@@ -635,9 +635,14 @@ df_grafico=sql^"""SELECT nombre_pais, cantidad, cantidad_de_sedes FROM sedes_por
 #creamos el gráfico
 colors = ['red' if sedes > 1 else 'blue' for sedes in df_grafico['cantidad_de_sedes']]
 fig,ax = plt.subplots(figsize=(10,9))
-ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,1000,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int),  color=colors, label='Flujo inmigratorio por paises')
-size_legend = ax.scatter([], [],color='blue' ,s=100, alpha=0.7, label='Cantidad de Sedes (1 o menos)')
-size_legend_red = ax.scatter([], [], color='red', s=100, alpha=0.7, label='Cantidad de Sedes (más de 1)')
+ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,1000,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int),  color=colors)
+
+
+legenda_sobre_plots_azules = ax.scatter([], [], color='blue', alpha=0.7, label='Paises con una sede')
+legenda_sobre_plots_rojos = ax.scatter([], [], color='red', s=100, alpha=0.7, label='Paises con 2 o más sedes')
+legenda_sobre_tamaño = ax.scatter([], [],color='blue' ,s=0, alpha=0.7, label='El tamaño de los puntos indica la cantidad de sedes')
+
+
 ax.set_yticks(np.linspace(1,1000,num=len(df_grafico['nombre_pais'])))
 ax.set_yticklabels(df_grafico['nombre_pais'])
 plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
@@ -668,9 +673,13 @@ df_grafico=sql^"""SELECT nombre_pais, cantidad, cantidad_de_sedes FROM sedes_por
                   INNER JOIN pais AS p ON p.pais_iso_3=destino """
 
 #creamos el gráfico
+colors = ['red' if sedes > 1 else 'blue' for sedes in df_grafico['cantidad_de_sedes']]
 fig,ax = plt.subplots(figsize=(10,9))
-ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,74,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int), label='Flujo inmigratorio por paises')
-size_legend = ax.scatter([], [],color='blue' ,s=100, alpha=0.7, label='Cantidad de Sedes')
+ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,74,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int),color=colors)
+
+legenda_sobre_plots_azules = ax.scatter([], [], color='blue', alpha=0.7, label='Paises con una sede')
+legenda_sobre_plots_rojos = ax.scatter([], [], color='red', s=100, alpha=0.7, label='Paises con 2 o más sedes')
+legenda_sobre_tamaño = ax.scatter([], [],color='blue' ,s=0, alpha=0.7, label='El tamaño de los puntos indica la cantidad de sedes')
  
 ax.set_yticks(np.linspace(1,74,num=len(df_grafico['nombre_pais'])))
 ax.set_yticklabels(df_grafico['nombre_pais'],fontsize=8)
