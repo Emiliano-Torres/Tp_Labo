@@ -595,8 +595,7 @@ ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
 ax.set_title("Flujo migratorio promedio por regiones",fontsize=19)
 plt.tight_layout()
 plt.show()
-<<<<<<< HEAD
-=======
+
 #%% Grafico ii auxiliar 
 #America del Norte nos achata toda la escala entonces queremos visualizar un grafico donde no participe
 region_ordenada.pop(0)
@@ -613,7 +612,7 @@ ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
 ax.set_title("Flujo migratorio promedio por regiones sin América del Norte",fontsize=19)
 plt.tight_layout()
 plt.show()
->>>>>>> 603c10b79c367ba460d1ecbcf1c1faa0928dac42
+
 #%% Gráfico iii)
 #Consultas sql para crear luego el gráfico 
 
@@ -648,7 +647,7 @@ ax.set_xlabel('Flujo migratorio', fontsize= 14)
 plt.tight_layout()
 plt.show()
 
-#%% Grafico auxiliar III
+#%% Grafico auxiliar IV) 
 #Consultas sql para crear luego el gráfico 
 
 flujo_migratorio_desde_argentina=sql^"""SELECT destino, cantidad FROM flujos_migratorios 
@@ -676,7 +675,7 @@ ax.set_yticks(np.linspace(1,74,num=len(df_grafico['nombre_pais'])))
 ax.set_yticklabels(df_grafico['nombre_pais'],fontsize=8)
 plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
 ax.legend()
-ax.set_title('Flujo migratorio desde Argentina \n y cantidad de sedes por países', fontsize=19)
+ax.set_title('Flujo migratorio desde Argentina año 2000 \n y cantidad de sedes por países', fontsize=19)
 ax.set_ylabel('Paises',fontsize=14)
 ax.set_xlabel('Flujo migratorio', fontsize= 14)
 plt.tight_layout()
