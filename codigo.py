@@ -594,22 +594,6 @@ ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
 ax.set_title("Flujo migratorio promedio por regiones",fontsize=19)
 plt.tight_layout()
 plt.show()
-#%% Grafico ii auxiliar 
-#America del Norte nos achata toda la escala queremos visualizar un grafico donde no participe
-region_ordenada.pop(0)
-datos_region_ordenados.pop(0)
-
-fig, ax =plt.subplots(figsize=(10,6))
-ax.boxplot(datos_region_ordenados, label='mediana')
-ax.scatter(x=[1,2,3,4,5,6,7,8], y=[np.mean(x) for x in datos_region_ordenados], label='media', color='green')
-ax.set_xticks([1,2,3,4,5,6,7,8])
-ax.set_xticklabels(region_ordenada,rotation=45,ha='right') 
-ax.legend()
-ax.set_xlabel("Regiones geográficas",fontsize= 16)
-ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
-ax.set_title("Flujo migratorio promedio por regiones auxiliar",fontsize=19)
-plt.tight_layout()
-plt.show()
 #%% Gráfico iii)
 #Consultas sql para crear luego el gráfico 
 
@@ -620,7 +604,7 @@ flujo_migratorio_hacia_argentina=sql^"""SELECT origen, cantidad FROM flujos_migr
 
 chequeo=sql^"""SELECT origen, cantidad FROM flujos_migratorios 
                               WHERE destino='ARG' AND origen!='ARG' AND año=2000 AND cantidad =0"""
-#ya que solo tienen una sede con 0 inmigración
+#ya que solo tienen una sede o 2 en un caso  los paises con 0 inmigración
 
 df_chequeo=sql^"""SELECT origen, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
                   INNER JOIN chequeo ON origen=pais_iso_3"""
@@ -643,3 +627,43 @@ ax.set_ylabel('Paises',fontsize=14)
 ax.set_xlabel('Flujo migratorio', fontsize= 14)
 plt.tight_layout()
 plt.show()
+
+#%% Grafico auxiliar III
+#Consultas sql para crear luego el gráfico 
+
+flujo_migratorio_desde_argentina=sql^"""SELECT destino, cantidad FROM flujos_migratorios 
+                                        WHERE origen='ARG' AND destino!='ARG' AND año=2000 AND cantidad !=0"""
+                                        
+#tomamos la decisión de ignorar los registros con 0 flujo migratorio
+
+chequeo=sql^"""SELECT destino, cantidad FROM flujos_migratorios 
+                              WHERE origen='ARG' AND destino!='ARG' AND año=2000 AND cantidad =0"""
+
+
+
+
+df_chequeo=sql^"""SELECT destino, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
+                  INNER JOIN chequeo ON destino=pais_iso_3"""
+##ya que solo tienen una sede o 2 en un caso  los paises con 0 inmigración
+
+df_grafico=sql^"""SELECT nombre_pais, cantidad, cantidad_de_sedes FROM sedes_por_codigo_pais
+                  INNER JOIN flujo_migratorio_desde_argentina ON destino=pais_iso_3
+                  INNER JOIN pais AS p ON p.pais_iso_3=destino """
+
+#creamos el gráfico
+fig,ax = plt.subplots(figsize=(10,9))
+ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,74,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int), label='Flujo inmigratorio por paises')
+size_legend = ax.scatter([], [],color='blue' ,s=100, alpha=0.7, label='Cantidad de Sedes')
+ 
+ax.set_yticks(np.linspace(1,74,num=len(df_grafico['nombre_pais'])))
+ax.set_yticklabels(df_grafico['nombre_pais'],fontsize=8)
+plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
+ax.legend()
+ax.set_title('Flujo migratorio desde Argentina \n y cantidad de sedes por países', fontsize=19)
+ax.set_ylabel('Paises',fontsize=14)
+ax.set_xlabel('Flujo migratorio', fontsize= 14)
+plt.tight_layout()
+plt.show()
+
+
+
