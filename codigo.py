@@ -8,6 +8,7 @@ GRUPO : EQUIPO ROCKET
 import pandas as pd
 from inline_sql import sql,sql_val
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 import numpy as np
 
 #%%===========================================================================
@@ -29,7 +30,7 @@ datos_migraciones=pd.read_csv(carpeta+"datos_migraciones.csv")
 # FILTRADO DE DATOS
 #=============================================================================
 
-
+#Seleccionamos los datos de interes
 datos_basicos=sql^ """SELECT DISTINCT sede_id, pais_iso_3, UPPER(pais_castellano) as pais_castellano
                       FROM datos_basicos """
 
@@ -41,7 +42,7 @@ datos_basicos=sql^ """SELECT s.sede_id, s.pais_iso_3,
                       s.pais_castellano, sec.cantidad_secciones
                       FROM datos_basicos AS s LEFT OUTER JOIN datos_secciones AS sec ON s.sede_id=sec.sede_id"""
 
-#renombramos las columnas de datos_migraciones 
+#renombramos las columnas de datos_migraciones
 datos_migraciones.rename(columns={'Country Origin Code': 'origen',
                           'Migration by Gender Code': 'genero',
                           'Country Dest Code':'destino',
@@ -333,7 +334,8 @@ año_1970= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1970 AS 
 año_1980= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1980 AS INTEGER) >=0 THEN 1980 END AS año ,casos_1980  AS cantidad FROM datos_migraciones"""
 año_1990= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_1990 AS INTEGER) >=0 THEN 1990 END AS año ,casos_1990  AS cantidad FROM datos_migraciones"""
 año_2000= sql^"""SELECT DISTINCT origen, destino, CASE WHEN CAST(casos_2000 AS INTEGER) >=0 THEN 2000 END AS año ,casos_2000  AS cantidad FROM datos_migraciones"""
-                                                                                                                           
+
+#unimos todo en un unico data frame
 flujos_migratorios = sql^ """SELECT * FROM año_1960 
                         UNION
                         SELECT * FROM año_1970 
@@ -492,15 +494,12 @@ sedes_por_region.loc[7,'region_geografica']='ÁFRICA  DEL  NORTE \n Y  CERCANO  
 #creamos el gráfico
 fig, ax = plt.subplots(figsize=(10,8))
 ax.bar(x=sedes_por_region['region_geografica'],height=sedes_por_region['sedes'], label='cantidad de sedes')
-for i, valor in enumerate(sedes_por_region['sedes']):
-    plt.text(i, valor + 1, str(int(valor)), ha='center', va='bottom')
-ax.legend() #genera la legenda usando la label
+ax.bar_label(ax.containers[0], fontsize=12)
 ax.set_ylabel('Cantidad de sedes',fontsize=16)
 ax.set_xlabel('Region geografica',fontsize=16)
 ax.set_xticklabels(sedes_por_region['region_geografica'],rotation=60,ha='right')
 ax.set_title('Cantidad de sedes por región geográfica',fontsize=19)
 ax.legend()
-plt.ylim(0,max(sedes_por_region['sedes']*1.1))
 plt.tight_layout()
 plt.show()
 
@@ -596,23 +595,6 @@ ax.set_title("Flujo migratorio promedio por regiones",fontsize=19)
 plt.tight_layout()
 plt.show()
 
-#%% Grafico ii auxiliar 
-#America del Norte nos achata toda la escala entonces queremos visualizar un grafico donde no participe
-region_ordenada.pop(0)
-datos_region_ordenados.pop(0)
-
-fig, ax =plt.subplots(figsize=(10,6))
-ax.boxplot(datos_region_ordenados, label='mediana')
-ax.scatter(x=[1,2,3,4,5,6,7,8], y=[np.mean(x) for x in datos_region_ordenados], label='media', color='green')
-ax.set_xticks([1,2,3,4,5,6,7,8])
-ax.set_xticklabels(region_ordenada,rotation=45,ha='right') 
-ax.legend()
-ax.set_xlabel("Regiones geográficas",fontsize= 16)
-ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
-ax.set_title("Flujo migratorio promedio por regiones sin América del Norte",fontsize=19)
-plt.tight_layout()
-plt.show()
-
 #%% Gráfico iii)
 #Consultas sql para crear luego el gráfico 
 
@@ -649,7 +631,8 @@ plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
 ax.legend()
 ax.set_title('Flujo migratorio hacia Argentina año 2000 \n y cantidad de sedes por países', fontsize=19)
 ax.set_ylabel('Países',fontsize=14)
-ax.set_xlabel('Flujo migratorio', fontsize= 14)
+ax.set_xlabel('Flujo migratorio (personas)', fontsize= 14)
+ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 plt.tight_layout()
 plt.show()
 
@@ -687,7 +670,8 @@ plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
 ax.legend()
 ax.set_title('Flujo migratorio desde Argentina año 2000 \n y cantidad de sedes por países', fontsize=19)
 ax.set_ylabel('Paises',fontsize=14)
-ax.set_xlabel('Flujo migratorio', fontsize= 14)
+ax.set_xlabel('Flujo migratorio (personas)', fontsize= 14)
+ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 plt.tight_layout()
 plt.show()
 
