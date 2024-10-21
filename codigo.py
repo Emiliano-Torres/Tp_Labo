@@ -633,10 +633,11 @@ df_grafico=sql^"""SELECT nombre_pais, cantidad, cantidad_de_sedes FROM sedes_por
                   INNER JOIN pais AS p ON p.pais_iso_3=origen """
 
 #creamos el gráfico
-fig,ax = plt.subplots(figsize=(10,8))
-ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,1000,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int), label='Flujo inmigratorio por paises')
-size_legend = ax.scatter([], [],color='blue' ,s=100, alpha=0.7, label='Cantidad de Sedes')
- 
+colors = ['red' if sedes > 1 else 'blue' for sedes in df_grafico['cantidad_de_sedes']]
+fig,ax = plt.subplots(figsize=(10,9))
+ax.scatter(x=df_grafico['cantidad'].apply(int),y=np.linspace(1,1000,num=len(df_grafico['nombre_pais'])),s=5*df_grafico['cantidad_de_sedes'].apply(int),  color=colors, label='Flujo inmigratorio por paises')
+size_legend = ax.scatter([], [],color='blue' ,s=100, alpha=0.7, label='Cantidad de Sedes (1 o menos)')
+size_legend_red = ax.scatter([], [], color='red', s=100, alpha=0.7, label='Cantidad de Sedes (más de 1)')
 ax.set_yticks(np.linspace(1,1000,num=len(df_grafico['nombre_pais'])))
 ax.set_yticklabels(df_grafico['nombre_pais'])
 plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
@@ -680,6 +681,5 @@ ax.set_ylabel('Paises',fontsize=14)
 ax.set_xlabel('Flujo migratorio', fontsize= 14)
 plt.tight_layout()
 plt.show()
-
 
 
