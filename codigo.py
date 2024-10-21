@@ -392,6 +392,7 @@ dataframe_resultado_i=sql^ """SELECT DISTINCT spp.nombre_pais AS pais,spp.sedes,
                             ORDER BY spp.sedes DESC, spp.nombre_pais ASC"""
 
 
+
 #%% Consulta ii)
 
 paises_con_sedes_argentinas=sql^"""SELECT DISTINCT pais_iso_3 FROM ubicada_en"""
@@ -511,7 +512,7 @@ paises_objetivo=sql^ """SELECT DISTINCT origen,destino FROM flujos_migratorios
                         INNER JOIN paises_con_sedes_argentinas ON origen=pais_iso_3 
                         WHERE destino IN (SELECT DISTINCT pais_iso_3 FROM paises_con_sedes_argentinas)"""
                 
-#necesitamos sumar todas las emigraciones independientemente del año en cada pais con almenos una sede argentina
+#necesitamos sumar todas las emigraciones independientemente del año en cada pais con al menos una sede argentina
 flujo_emigratorio=sql^ """SELECT DISTINCT p.origen , 
                           SUM(CAST(fm.cantidad AS INTEGER)) AS flujo_emi
                           FROM paises_objetivo AS p 
@@ -530,13 +531,13 @@ flujo_inmigratorio=sql^ """SELECT DISTINCT p.destino ,
                         """
 
 #calculamos el promedio
-flujo_migratorio_paises=sql^""" SELECT fe.origen, (flujo_inmi - flujo_emi)/5 AS flujo_migratorio 
+flujo_migratorio_paises_promedio=sql^""" SELECT fe.origen, (flujo_inmi - flujo_emi)/5 AS flujo_migratorio 
                                 FROM flujo_emigratorio AS fe
                                 INNER JOIN flujo_inmigratorio AS fi ON fe.origen=fi.destino"""
 
 #lo agrupamos por regiones
 flujo_promedio_por_regiones=sql^"""SELECT DISTINCT p.region_geografica, flujo_migratorio
-                                FROM pais AS p INNER JOIN flujo_migratorio_paises AS f
+                                FROM pais AS p INNER JOIN flujo_migratorio_paises_promedio AS f
                                 ON p.pais_iso_3=f.origen
                                 """
 
@@ -607,7 +608,7 @@ ax.set_xticklabels(region_ordenada,rotation=45,ha='right')
 ax.legend()
 ax.set_xlabel("Regiones geográficas",fontsize= 16)
 ax.set_ylabel("Flujo migratorio promedio", fontsize= 14)
-ax.set_title("Flujo migratorio promedio por regiones auxiliar",fontsize=19)
+ax.set_title("Flujo migratorio promedio por regiones sin América del Norte",fontsize=19)
 plt.tight_layout()
 plt.show()
 #%% Gráfico iii)
@@ -638,8 +639,8 @@ ax.set_yticks(np.linspace(1,1000,num=len(df_grafico['nombre_pais'])))
 ax.set_yticklabels(df_grafico['nombre_pais'])
 plt.grid(True, linestyle='--', color='gray', linewidth=0.7)
 ax.legend()
-ax.set_title('Flujo migratorio hacia Argentina \n y cantidad de sedes por países', fontsize=19)
-ax.set_ylabel('Paises',fontsize=14)
+ax.set_title('Flujo migratorio hacia Argentina año 2000 \n y cantidad de sedes por países', fontsize=19)
+ax.set_ylabel('Países',fontsize=14)
 ax.set_xlabel('Flujo migratorio', fontsize= 14)
 plt.tight_layout()
 plt.show()
